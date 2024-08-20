@@ -1,26 +1,33 @@
 import pandas as pd
-from data_loader import CovidDataLoader
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-class CovidEDA:
+def perform_eda(df):
+    results = {}
     
-    def __init__(self, data):
-        self.df = pd.DataFrame(data)
+    # Estadísticas descriptivas
+    results['summary_stats'] = df.describe()
     
-    def basic_statistics(self):
-        return self.df.describe()
+    # Casos totales por estado
+    total_cases_by_state = df.groupby('state')['positive'].max().sort_values(ascending=False)
+    plt.figure(figsize=(12, 6))
+    total_cases_by_state.plot(kind='bar')
+    plt.title('Casos totales de COVID-19 por estado')
+    plt.xlabel('Estado')
+    plt.ylabel('Casos totales')
+    plt.tight_layout()
+    plt.savefig('../data/total_cases_by_state.png')
+    results['total_cases_by_state'] = total_cases_by_state
     
-    def missing_values_summary(self):
-        return self.df.isnull().sum()
+    # Evolución temporal de casos
+    daily_cases = df.groupby('date')['positive'].sum()
+    plt.figure(figsize=(12, 6))
+    daily_cases.plot()
+    plt.title('Evolución de casos diarios de COVID-19')
+    plt.xlabel('Fecha')
+    plt.ylabel('Casos diarios')
+    plt.tight_layout()
+    plt.savefig('../data/daily_cases_evolution.png')
+    results['daily_cases_evolution'] = daily_cases
     
-    def plot_trends(self, state):
-        state_data = self.df[self.df['state'] == state]
-        state_data.plot(x='date', y=['positive', 'death'], title=f'COVID-19 Trends in {state}')
-    
-if __name__ == "__main__":
-    loader = CovidDataLoader()
-    covid_data = loader.load_data()
-    
-    eda = CovidEDA(covid_data)
-    print(eda.basic_statistics())
-    print(eda.missing_values_summary())
-    eda.plot_trends('NY')
+    return results
